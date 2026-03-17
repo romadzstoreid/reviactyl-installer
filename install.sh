@@ -1,68 +1,152 @@
 #!/bin/bash
+set -e
 
-# ==========================================
-# Pewarnaan UI Terminal (Aesthetic & Clean)
-# ==========================================
-BLUE='\033[0;34m'
+######################################################################################
+#                                                                                    #
+# Project 'SapuraHost Theme Installer'                                               #
+#                                                                                    #
+# Copyright (C) 2025 - 2026, Romadz, <https://github.com/romadzstoreid>              #
+#                                                                                    #
+# This script is not associated with the official Pterodactyl Project.               #
+# https://github.com/romadzstoreid/reviactyl-installer                               #
+#                                                                                    #
+######################################################################################
+
+# Export Variabel Dasar
+export SCRIPT_RELEASE="v1.0.0"
+export GITHUB_BASE_URL="https://raw.githubusercontent.com/romadzstoreid/reviactyl-installer"
+LOG_PATH="/var/log/sapurahost-installer.log"
+
+# Warna untuk UI
 CYAN='\033[0;36m'
+BLUE='\033[0;34m'
 GREEN='\033[0;32m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+YELLOW='\033[1;33m'
+NC='\033[0m'
 
-clear
-echo -e "${CYAN}====================================================${NC}"
-echo -e "${BLUE}        SAPURAHOST PANEL - AUTO INSTALLER           ${NC}"
-echo -e "${CYAN}====================================================${NC}"
-echo -e "${GREEN} Tema: Reviactyl | Menyiapkan Instalasi...          ${NC}"
-echo -e "${CYAN}====================================================${NC}"
-echo ""
-
-# Pengecekan Akses Root
-if [ "$EUID" -ne 0 ]; then
-  echo -e "${RED}[X] Error: Script ini harus dijalankan sebagai root (gunakan sudo).${NC}"
-  exit 1
+# Check for curl
+if ! [ -x "$(command -v curl)" ]; then
+    echo "* curl is required in order for this script to work."
+    exit 1
 fi
 
-# Memastikan direktori Pterodactyl ada
-if [ ! -d "/var/www/pterodactyl" ]; then
-  echo -e "${RED}[X] Error: Direktori /var/www/pterodactyl tidak ditemukan!${NC}"
-  exit 1
-fi
+# Fungsi Header
+output() {
+    echo -e "${CYAN}*${NC} $1"
+}
 
-# Memulai Proses
-cd /var/www/pterodactyl || exit
+error() {
+    echo -e "${RED}* ERROR: $1${NC}"
+}
 
-echo -e "${CYAN}[1/9]${NC} Mengamankan file konfigurasi database (.env)..."
-cp .env /root/.env_backup
+welcome() {
+    clear
+    echo -e "${BLUE}######################################################################${NC}"
+    echo -e "${BLUE}#                                                                    #${NC}"
+    echo -e "${BLUE}#                SAPURAHOST - THEME AUTO INSTALLER                   #${NC}"
+    echo -e "${BLUE}#                Script Release: ${SCRIPT_RELEASE}                               #${NC}"
+    echo -e "${BLUE}#                                                                    #${NC}"
+    echo -e "${BLUE}######################################################################${NC}"
+    echo ""
+}
 
-echo -e "${CYAN}[2/9]${NC} Menghapus file panel lama..."
-rm -rf *
+# Fungsi Eksekusi Utama
+execute_action() {
+    local action=$1
+    echo -e "\n\n* sapurahost-installer $(date) \n\n" >>$LOG_PATH
 
-echo -e "${CYAN}[3/9]${NC} Mengembalikan file konfigurasi database (.env)..."
-mv /root/.env_backup .env
+    case $action in
+        "install")
+            output "Memulai Instalasi Tema Reviactyl..."
+            cd /var/www/pterodactyl || exit
+            output "Mengamankan konfigurasi .env..."
+            cp .env /root/.env_backup >>$LOG_PATH 2>&1
+            
+            output "Membersihkan direktori lama..."
+            rm -rf * >>$LOG_PATH 2>&1
+            mv /root/.env_backup .env
+            
+            output "Mengunduh file tema..."
+            curl -Lo panel.tar.gz https://github.com/reviactyl/panel/releases/latest/download/panel.tar.gz >>$LOG_PATH 2>&1
+            tar -xzvf panel.tar.gz >>$LOG_PATH 2>&1
+            rm panel.tar.gz
+            
+            output "Menyelesaikan proses (ini mungkin memakan waktu)..."
+            chmod -R 755 storage/* bootstrap/cache/
+            COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader >>$LOG_PATH 2>&1
+            php artisan migrate --seed --force >>$LOG_PATH 2>&1
+            finalize
+            ;;
+            
+        "uninstall")
+            output "Mengembalikan Panel ke Tema Default..."
+            cd /var/www/pterodactyl || exit
+            cp .env /root/.env_backup >>$LOG_PATH 2>&1
+            
+            output "Menghapus tema saat ini..."
+            rm -rf * >>$LOG_PATH 2>&1
+            mv /root/.env_backup .env
+            
+            output "Mengunduh Panel Pterodactyl resmi..."
+            curl -Lo panel.tar.gz https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz >>$LOG_PATH 2>&1
+            tar -xzvf panel.tar.gz >>$LOG_PATH 2>&1
+            rm panel.tar.gz
+            
+            output "Membangun ulang struktur default..."
+            chmod -R 755 storage/* bootstrap/cache/
+            COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader >>$LOG_PATH 2>&1
+            php artisan view:clear >>$LOG_PATH 2>&1
+            php artisan config:clear >>$LOG_PATH 2>&1
+            finalize
+            ;;
+    esac
+}
 
-echo -e "${CYAN}[4/9]${NC} Mengunduh tema Reviactyl terbaru..."
-curl -Lo panel.tar.gz https://github.com/reviactyl/panel/releases/latest/download/panel.tar.gz
+finalize() {
+    output "Mengatur kepemilikan file..."
+    chown -R www-data:www-data /var/www/pterodactyl/* >>$LOG_PATH 2>&1
+    output "Merestart layanan (Nginx & PteroQ)..."
+    systemctl restart pteroq.service
+    systemctl restart nginx
+    echo -e "\n${GREEN}* Proses selesai dengan sukses!${NC}"
+    echo -e "${CYAN}* Log instalasi dapat dilihat di: ${LOG_PATH}${NC}"
+}
 
-echo -e "${CYAN}[5/9]${NC} Mengekstrak file tema..."
-tar -xzvf panel.tar.gz
-rm panel.tar.gz # Membersihkan file zip agar server tetap bersih
+# Logic Menu Seperti pterodactyl-installer.se
+welcome
+done=false
+while [ "$done" == false ]; do
+    options=(
+        "Install Tema Reviactyl"
+        "Uninstall Tema Reviactyl (Kembali ke Default)"
+        "Keluar dari Installer"
+    )
+    actions=(
+        "install"
+        "uninstall"
+        "exit"
+    )
 
-echo -e "${CYAN}[6/9]${NC} Mengatur perizinan folder (chmod)..."
-chmod -R 755 storage/* bootstrap/cache/
+    output "Apa yang ingin Anda lakukan?"
+    for i in "${!options[@]}"; do
+        output "[$i] ${options[$i]}"
+    done
 
-echo -e "${CYAN}[7/9]${NC} Menginstal dependensi Composer (Tanpa Dev)..."
-COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
+    echo -n "* Masukkan pilihan (0-$((${#actions[@]} - 1))): "
+    read -r action
 
-echo -e "${CYAN}[8/9]${NC} Membangun ulang database (Migrate & Seed)..."
-php artisan migrate --seed --force
+    if [ -z "$action" ] || [[ ! "0 1 2" =~ $action ]]; then
+        error "Pilihan tidak valid, coba lagi."
+        continue
+    fi
 
-echo -e "${CYAN}[9/9]${NC} Mengatur Ownership (www-data) & Merestart Service..."
-chown -R www-data:www-data /var/www/pterodactyl/*
-systemctl restart pteroq.service
-systemctl restart nginx
+    if [ "$action" == "2" ]; then
+        output "Keluar..."
+        done=true
+        exit 0
+    fi
 
-echo ""
-echo -e "${CYAN}====================================================${NC}"
-echo -e "${GREEN} [✓] Instalasi Tema Reviactyl Berhasil!             ${NC}"
-echo -e "${CYAN}====================================================${NC}"
+    done=true
+    execute_action "${actions[$action]}"
+done
