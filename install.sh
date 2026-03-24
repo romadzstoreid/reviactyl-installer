@@ -2,182 +2,144 @@
 set -e
 
 ######################################################################################
-#                                                                                    #
-# Project 'SapuraHost Theme Installer'                                               #
-#                                                                                    #
-# Copyright (C) 2025 - 2026, Romadz                                                  #
-#                                                                                    #
+#                                                                                                                      #
+#                                 Project 'SapuraHost Theme Installer'                                                #
+#                                                                                                                     #
+#                                  Copyright 2026, Romadz Store ID                                                #
+#                                                                                                                     #
 ######################################################################################
 
-# Export Variabel Dasar
-export SCRIPT_RELEASE="v1.1.0"
+export SCRIPT_RELEASE="v1.2.0"
 LOG_PATH="/var/log/sapurahost-installer.log"
+BACKUP_DIR="/root/sapurahost_backups"
 
-# Warna UI (Soft Blue Palette)
-SOFT_BLUE='\e[38;5;111m'
-WHITE='\e[97m'
-GREEN='\e[38;5;114m'
-RED='\e[38;5;167m'
-YELLOW='\e[38;5;222m'
-NC='\e[0m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+LIGHT_BLUE='\033[1;34m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
 
-# Check for curl
-if ! [ -x "$(command -v curl)" ]; then
-    echo -e "${RED}* Error: curl is required in order for this script to work.${NC}"
-    exit 1
-fi
+for cmd in curl zip; do
+    if ! [ -x "$(command -v $cmd)" ]; then
+        echo -e "${RED}* Error: $cmd diperlukan untuk menjalankan skrip ini.${NC}"
+        exit 1
+    fi
+done
 
-# Fungsi Output Profesional
-output() {
-    echo -e "${SOFT_BLUE}❖${NC} ${WHITE}$1${NC}"
-}
+info() { echo -e "${CYAN}──>${NC} $1"; }
+success() { echo -e "${GREEN}──>${NC} $1"; }
+error() { echo -e "${RED}──> ERROR:${NC} $1"; }
 
-error() {
-    echo -e "${RED}❖ ERROR:${NC} ${WHITE}$1${NC}"
-}
-
-welcome() {
+header() {
     clear
-    echo -e "${SOFT_BLUE}┌──────────────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${SOFT_BLUE}│${NC}                                                                      ${SOFT_BLUE}│${NC}"
-    echo -e "${SOFT_BLUE}│${NC}                 ${WHITE}SAPURAHOST - THEME AUTO INSTALLER${NC}                    ${SOFT_BLUE}│${NC}"
-    echo -e "${SOFT_BLUE}│${NC}                 ${SOFT_BLUE}Script Release: ${SCRIPT_RELEASE}${NC}                                  ${SOFT_BLUE}│${NC}"
-    echo -e "${SOFT_BLUE}│${NC}                                                                      ${SOFT_BLUE}│${NC}"
-    echo -e "${SOFT_BLUE}│${NC}                      ${WHITE}anda puas - kami senang${NC}                         ${SOFT_BLUE}│${NC}"
-    echo -e "${SOFT_BLUE}└──────────────────────────────────────────────────────────────────────┘${NC}"
+    echo -e "${BLUE}┌────────────────────────────────────────────────────────────────────┐${NC}"
+    echo -e "${BLUE}│${NC}  ${LIGHT_BLUE}SAPURAHOST${NC} - THEME AUTO INSTALLER                            ${BLUE}│${NC}"
+    echo -e "${BLUE}│${NC}  Release: ${SCRIPT_RELEASE}                                              ${BLUE}│${NC}"
+    echo -e "${BLUE}└────────────────────────────────────────────────────────────────────┘${NC}"
     echo ""
 }
 
-# Fungsi Eksekusi Utama
+backup_system() {
+    info "Memulai pencadangan sistem otomatis..."
+    mkdir -p "$BACKUP_DIR"
+    local TIMESTAMP=$(date +%F_%H-%M-%S)
+    
+    cd /var/www/pterodactyl || exit
+    
+    cp .env "$BACKUP_DIR/.env_$TIMESTAMP"
+    
+    php artisan db:backup >>$LOG_PATH 2>&1 || {
+        info "Menggunakan mysqldump untuk pencadangan database..."
+        export $(grep -v '^#' .env | xargs)
+        mysqldump -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_DATABASE" > "$BACKUP_DIR/db_$TIMESTAMP.sql" 2>>$LOG_PATH
+    }
+    
+    success "Backup berhasil disimpan di: $BACKUP_DIR"
+}
+
 execute_action() {
     local action=$1
-    echo -e "\n\n* sapurahost-installer $(date) - Action: $action \n\n" >>$LOG_PATH
+    echo -e "\n\n* sapurahost-installer log $(date) \n\n" >>$LOG_PATH
+    
+    backup_system
 
     case $action in
-        "install_reviactyl")
-            output "Memulai Instalasi Tema Reviactyl..."
+        "reviactyl")
+            info "Memasang Tema Reviactyl..."
             cd /var/www/pterodactyl || exit
-            output "Mengamankan konfigurasi .env..."
-            cp .env /root/.env_backup >>$LOG_PATH 2>&1
-            
-            output "Membersihkan direktori lama..."
-            rm -rf * >>$LOG_PATH 2>&1
-            mv /root/.env_backup .env
-            
-            output "Mengunduh file tema Reviactyl..."
             curl -Lo panel.tar.gz https://github.com/reviactyl/panel/releases/latest/download/panel.tar.gz >>$LOG_PATH 2>&1
             tar -xzvf panel.tar.gz >>$LOG_PATH 2>&1
             rm panel.tar.gz
-            
-            output "Membangun sistem dependensi (ini mungkin memakan waktu)..."
-            chmod -R 755 storage/* bootstrap/cache/
-            COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader >>$LOG_PATH 2>&1
-            php artisan migrate --seed --force >>$LOG_PATH 2>&1
             finalize
             ;;
-            
-        "install_nook")
-            output "Memulai Instalasi Tema Nookure..."
+
+        "nook")
+            info "Memasang Tema Nook (Nookure)..."
             cd /var/www/pterodactyl || exit
-            
-            output "Memasukkan panel ke mode maintenance..."
             php artisan down >>$LOG_PATH 2>&1
-            
-            output "Mengunduh dan mengekstrak file tema Nookure..."
             curl -L https://github.com/Nookure/NookTheme/releases/latest/download/panel.tar.gz | tar -xzv >>$LOG_PATH 2>&1
-            
-            output "Menyesuaikan perizinan file..."
-            chmod -R 755 storage/* bootstrap/cache >>$LOG_PATH 2>&1
-            
-            output "Menjalankan Composer..."
-            COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader >>$LOG_PATH 2>&1
-            
-            output "Membersihkan cache sistem..."
-            php artisan view:clear >>$LOG_PATH 2>&1
-            php artisan config:clear >>$LOG_PATH 2>&1
-            
-            output "Menjalankan migrasi database..."
-            php artisan migrate --seed --force >>$LOG_PATH 2>&1
-            
-            output "Mengembalikan panel online..."
-            php artisan queue:restart >>$LOG_PATH 2>&1
-            php artisan up >>$LOG_PATH 2>&1
             finalize
+            php artisan up >>$LOG_PATH 2>&1
             ;;
             
         "uninstall")
-            output "Mengembalikan Panel ke Tema Default..."
+            info "Mengembalikan ke Tema Default (Pterodactyl)..."
             cd /var/www/pterodactyl || exit
             
-            output "Mengamankan konfigurasi .env..."
-            cp .env /root/.env_backup >>$LOG_PATH 2>&1
+            cp .env /root/ptero_env_temp
             
-            output "Menghapus tema saat ini..."
-            rm -rf * >>$LOG_PATH 2>&1
-            mv /root/.env_backup .env
-            
-            output "Mengunduh Panel Pterodactyl resmi..."
+            info "Mengunduh source code Pterodactyl..."
             curl -Lo panel.tar.gz https://github.com/pterodactyl/panel/releases/latest/download/panel.tar.gz >>$LOG_PATH 2>&1
+            
             tar -xzvf panel.tar.gz >>$LOG_PATH 2>&1
             rm panel.tar.gz
             
-            output "Membangun ulang struktur default..."
-            chmod -R 755 storage/* bootstrap/cache/
-            COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader >>$LOG_PATH 2>&1
-            php artisan view:clear >>$LOG_PATH 2>&1
-            php artisan config:clear >>$LOG_PATH 2>&1
+            # Kembalikan .env
+            mv /root/ptero_env_temp .env
+            
             finalize
             ;;
     esac
 }
 
 finalize() {
-    output "Mengatur kepemilikan file (www-data)..."
+    info "Sinkronisasi dependensi dan migrasi..."
+    chmod -R 755 storage/* bootstrap/cache/ >>$LOG_PATH 2>&1
+    
+    COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader >>$LOG_PATH 2>&1
+    
+    php artisan view:clear >>$LOG_PATH 2>&1
+    php artisan config:clear >>$LOG_PATH 2>&1
+    php artisan migrate --seed --force >>$LOG_PATH 2>&1
+    
+    info "Mengatur perizinan file..."
     chown -R www-data:www-data /var/www/pterodactyl/* >>$LOG_PATH 2>&1
     
-    output "Merestart layanan (Nginx & PteroQ)..."
+    info "Memuat ulang layanan..."
+    php artisan queue:restart >>$LOG_PATH 2>&1
     systemctl restart pteroq.service >>$LOG_PATH 2>&1
     systemctl restart nginx >>$LOG_PATH 2>&1
     
-    echo -e "\n${GREEN}❖ Proses selesai dengan sukses!${NC}"
-    echo -e "${SOFT_BLUE}❖ Log instalasi dapat dilihat di: ${LOG_PATH}${NC}\n"
+    success "Proses selesai dengan sukses!"
 }
 
-# Logic Menu
-welcome
+header
 while true; do
-    options=(
-        "Install Tema Reviactyl"
-        "Install Tema Nookure"
-        "Uninstall Tema (Kembali ke Default)"
-        "Keluar dari Installer"
-    )
-    actions=(
-        "install_reviactyl"
-        "install_nook"
-        "uninstall"
-        "exit"
-    )
-
-    output "Pilih menu eksekusi:"
-    for i in "${!options[@]}"; do
-        echo -e "  ${SOFT_BLUE}[$i]${NC} ${WHITE}${options[$i]}${NC}"
-    done
+    echo -e "${LIGHT_BLUE}MENU UTAMA:${NC}"
+    echo -e " [1] Install Tema Reviactyl"
+    echo -e " [2] Install Tema Nook (Nookure)"
+    echo -e " [3] Uninstall Tema (Kembali ke Default)"
+    echo -e " [4] Keluar"
     echo ""
+    echo -n -e "${CYAN}Pilih opsi (1-4): ${NC}"
+    read -r choice
 
-    echo -ne "${YELLOW}❖ Masukkan pilihan (0-$((${#actions[@]} - 1))): ${NC}"
-    read -r action
-
-    if [ -z "$action" ] || [[ ! "0 1 2 3" =~ $action ]]; then
-        error "Pilihan tidak valid, silakan coba lagi.\n"
-        continue
-    fi
-
-    if [ "$action" == "3" ]; then
-        output "Keluar dari installer. Terima kasih!"
-        exit 0
-    fi
-
-    execute_action "${actions[$action]}"
-    break
+    case $choice in
+        1) execute_action "reviactyl"; break ;;
+        2) execute_action "nook"; break ;;
+        3) execute_action "uninstall"; break ;;
+        4) info "Keluar..."; exit 0 ;;
+        *) error "Opsi tidak tersedia." ;;
+    esac
 done
