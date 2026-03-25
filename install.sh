@@ -61,29 +61,26 @@ run_with_spinner() {
 }
 
 welcome() {
-    local width=60
-    local title="SAPURAHOST - THEME AUTO INSTALLER"
-    local release="Script Release: ${SCRIPT_RELEASE}"
-
-    local pad_title=$(( (width - ${#title}) / 2 ))
-    local pad_rel=$(( (width - ${#release}) / 2 ))
-
     clear
-    echo -e "${CYAN}╭────────────────────────────────────────────────────────────╮${NC}"
-    echo -e "${CYAN}│$(printf '%*s' $width "")│${NC}"   
     
-    echo -ne "${CYAN}│${BOLD}${WHITE}"
-    printf "%*s%s%*s" $pad_title "" "$title" $((width - pad_title - ${#title})) ""
-    echo -e "${NC}${CYAN}│${NC}"    
+    # Warna dasar
+    CYAN='\033[0;36m'
+    WHITE='\033[1;37m'
+    NC='\033[0m'
     
-    echo -ne "${CYAN}│${MAGENTA}"
-    printf "%*s%s%*s" $pad_rel "" "$release" $((width - pad_rel - ${#release})) ""
-    echo -e "${NC}${CYAN}│${NC}"    
-    
-    echo -e "${CYAN}│$(printf '%*s' $width "")│${NC}"
-    echo -e "${CYAN}╰────────────────────────────────────────────────────────────╯${NC}"
+    echo -e "${CYAN}  _____                                                    _____  ${NC}"
+    echo -e "${CYAN}( ___ )--------------------------------------------------( ___ )${NC}"
+    echo -e "${CYAN} |   |                                                    |   | ${NC}"
+    echo -e "${CYAN} |   |${WHITE}            ⃟Script Installer Otomatis            ${CYAN}|   | ${NC}"
+    echo -e "${CYAN} |   |${WHITE}                       ────                       ${CYAN}|   | ${NC}"
+    echo -e "${CYAN} |   |${WHITE}                • Telegram: @rmddz                ${CYAN}|   | ${NC}"
+    echo -e "${CYAN} |   |${WHITE}            • Website: romadzrbg.my.id            ${CYAN}|   | ${NC}"
+    echo -e "${CYAN} |___|                                                    |___| ${NC}"
+    echo -e "${CYAN}(_____)--------------------------------------------------(_____)${NC}"
     echo ""
 }
+
+
 
 execute_action() {
     local action=$1
