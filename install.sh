@@ -4,15 +4,18 @@ set -e
 export SCRIPT_RELEASE="v1.2.0"
 LOG_PATH="/var/log/sapurahost-installer.log"
 
+# Definisi Warna & Gaya Teks (ANSI Escape Codes)
 SOFT_BLUE='\e[38;5;111m'
 WHITE='\e[97m'
 GREEN='\e[38;5;114m'
 RED='\e[38;5;167m'
 YELLOW='\e[38;5;222m'
-NC='\e[0m'
+BOLD='\e[1m'
+ITALIC='\e[3m'
+NC='\e[0m' # No Color / Reset
 
 if ! [ -x "$(command -v curl)" ]; then
-    echo -e "${RED}✦ KESALAHAN: Perintah 'curl' diperlukan untuk menjalankan skrip ini.${NC}"
+    echo -e "${RED}${BOLD}✦ KESALAHAN:${NC} Perintah 'curl' diperlukan untuk menjalankan skrip ini.${NC}"
     exit 1
 fi
 
@@ -21,7 +24,7 @@ output() {
 }
 
 error() {
-    echo -e "${RED}✦ KESALAHAN:${NC} ${WHITE}$1${NC}"
+    echo -e "${RED}${BOLD}✦ KESALAHAN:${NC} ${WHITE}$1${NC}"
 }
 
 run_loading() {
@@ -38,22 +41,26 @@ run_loading() {
         done
     done
     wait $pid
-    printf "\r${SOFT_BLUE}✦${NC} ${WHITE}%s... ${GREEN}Selesai!${NC} \n" "$msg"
+    printf "\r${SOFT_BLUE}✦${NC} ${WHITE}%s... ${GREEN}${BOLD}Selesai!${NC} \n" "$msg"
 }
 
 welcome() {
     clear
-    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⠀⣀⣠⣤⡀⠀⠹⣿⣿⡆⠀⢸⣿⡿⢻⣿⣿⣶⣦⣤⣀⠀⠀⠀⠀⠀${NC}"
-    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⠈⠻⣿⣿⣷⡄⠀⠹⣿⣷⠀⠸⠋⠀⣰⣿⣿⣿⣿⣿⣿⣿⣷⠀⠀⠀${NC}"
-    echo -e "${SOFT_BLUE}⠀⠀⠀⣤⡀⠀⠈⠻⢿⣿⣦⡀⠛⠁⠀⠀⠀⠈⠙⢿⣿⣿⣿⣿⣿⣿⣿⠀${NC}        ${WHITE}Automatic Installer Script${NC}"
-    echo -e "${SOFT_BLUE}⠀⠀⠀⣿⣿⣷⣦⣄⡀⠙⠋⠀⠀⠀⠀⠀⠀⠀⠀⢀⠈⢻⣿⣿⣿⣿⣿⠀${NC}        ${SOFT_BLUE}--------------------------${NC}"
-    echo -e "${SOFT_BLUE}⠀⠀⠀⠉⠙⠛⠻⠿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⠈⢿⣿⣿⣿⣿⠀⠀⠀${NC}"
-    echo -e "${SOFT_BLUE}⠀⠀⠀⢠⣤⣤⣤⣤⠀⠀⠀⠀⠀⠀⠀⠀⡇⠀⠀⠀⠀⠀⠈⢿⣿⣿⣿⠀${NC}        ${WHITE}• Telegram: @rmddz${NC}"
-    echo -e "${SOFT_BLUE}⠀⠀⠀⠸⠿⠿⠛⠃⠀⠀⠀⠀⠀⠀⠀⠀⣿⣤⣀⠀⠀⠀⠀⠈⢿⣿⡟${NC}         ${WHITE}• Website: romadzrbg.my.id${NC}"
-    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⢀⣠⣤⡆⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣷⡀⢄⡈⠒⣨⣿⡇⠀⠀⠀${NC}"
-    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⢿⣿⡿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣷⣤⣿⣿⣿⣿⠁⠀⠀⠀${NC}"
-    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⠈⠁⠀⣀⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⡿⠃⠀⠀⠀${NC}        ${YELLOW}Copyright [©] Romadz ID - 2026.${NC}"
-    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⠀⠀⠘⢿⡷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠿⠛⠁⠀⠀⠀${NC}"
+    echo -e "${SOFT_BLUE}   ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⢸${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⢸${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠶⠶⣄⣸⡀${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠐⡩⠭⣿⣿⣿⣒⡢${NC}      ${BOLD}${WHITE}Automatic Installer Script${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⢣⠙${NC}      ${SOFT_BLUE}--------------------------${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣰⣆${NC}             ${ITALIC}${WHITE}• Telegram: @rmddz${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣾⣇⣼⡄${NC}           ${ITALIC}${WHITE}• Website: romadzrbg.my.id${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⢿⠓⢶⣤⣴⣶⣿⣿⡿⠋⠉⣝⢷⡀${NC}"      
+    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⠈⢿⣿⡟⠁⠀⠮⢿⡇⠀⠀⠀⣸⣧⣒⣒⡒⠤${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⠀⢀⣈⣿⣧⡀⠀⠀⣸⣿⣶⣶⣾⣿⣿⠷⠦⣘⠁${NC}    ${BOLD}${YELLOW}Copyright [©] Romadz ID - 2026.${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⢊⠥⢒⡺⣿⣿⣶⣾⣿⣿⣿⣿⣿⡿⠃${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⢀⠈⠁⠀⠈⢻⣿⣿⣿⣿⡿⠿⠋⠀${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⣿⡇⠀⢠⣶⣿⣿⣷⡄${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⣿⣧⠀⣿⣿⣿⣿⣿⣧⠀⠀⠀${NC}"
+    echo -e "${SOFT_BLUE}⠀⠀⠀⠈⠛⠿⣿⣿⡿⣿⡿⠿⠀${NC}"
     echo -e ""
 }
 
@@ -68,9 +75,9 @@ execute_action() {
             run_loading "Menghasilkan Kata Sandi Acak Baru" sleep 1
             run_loading "Menerapkan kata sandi pada pengguna root" bash -c "echo 'root:$NEW_PASS' | chpasswd"
             
-            echo -e "\n${SOFT_BLUE}✦ INFORMASI KREDENSIAL VPS BARU${NC}"
+            echo -e "\n${SOFT_BLUE}✦ ${BOLD}INFORMASI KREDENSIAL VPS BARU${NC}"
             echo -e " ${SOFT_BLUE}➪${NC} ${WHITE}Nama Pengguna (Username):${NC} ${GREEN}root${NC}"
-            echo -e " ${SOFT_BLUE}➪${NC} ${WHITE}Kata Sandi Baru (Password):${NC} ${YELLOW}$NEW_PASS${NC}\n"
+            echo -e " ${SOFT_BLUE}➪${NC} ${WHITE}Kata Sandi Baru (Password):${NC} ${YELLOW}${BOLD}$NEW_PASS${NC}\n"
             ;;
 
         "install_reviactyl")
@@ -120,8 +127,8 @@ finalize() {
     run_loading "Mengatur kepemilikan berkas (www-data)" chown -R www-data:www-data /var/www/pterodactyl/*
     run_loading "Memulai ulang layanan pteroq" systemctl restart pteroq.service
     run_loading "Memulai ulang layanan nginx" systemctl restart nginx
-    echo -e "\n${GREEN}✦ Proses instalasi telah selesai dengan sukses!${NC}"
-    echo -e "${SOFT_BLUE}✦ Catatan instalasi (log) dapat dilihat pada: ${LOG_PATH}${NC}\n"
+    echo -e "\n${GREEN}${BOLD}✦ Proses instalasi telah selesai dengan sukses!${NC}"
+    echo -e "${SOFT_BLUE}✦ Catatan instalasi (log) dapat dilihat pada: ${ITALIC}${LOG_PATH}${NC}\n"
 }
 
 welcome
@@ -141,13 +148,13 @@ while true; do
         "exit"
     )
 
-    output "Silakan Pilih Menu Operasi:"
+    output "Silakan Pilih Menu:"
     for i in "${!options[@]}"; do
         echo -e "  ${SOFT_BLUE}[$i]${NC} ${WHITE}${options[$i]}${NC}"
     done
     echo ""
 
-    echo -ne "${YELLOW}✦ Masukkan pilihan Anda (0-$((${#actions[@]} - 1))): ${NC}"
+    echo -ne "${YELLOW}${BOLD}✦ Masukkan pilihan Anda (0-$((${#actions[@]} - 1))): ${NC}"
     read -r action
 
     if [[ ! "$action" =~ ^[0-4]$ ]]; then
@@ -163,7 +170,7 @@ while true; do
     execute_action "${actions[$action]}"
     
     if [ "$action" == "0" ]; then
-        echo -ne "${YELLOW}Tekan [Enter] untuk kembali ke menu utama...${NC}"
+        echo -ne "${YELLOW}${ITALIC}Tekan [Enter] untuk kembali ke menu utama...${NC}"
         read -r
         welcome
         continue
