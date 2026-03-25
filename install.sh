@@ -33,16 +33,16 @@ welcome() {
     local pad_rel=$(( (width - ${#release}) / 2 ))
 
     clear
-    echo -e "${SOFT_BLUE}(——)════════════════════════════════════════════════════════════(——)${NC}"
-    echo -e "${SOFT_BLUE}|  |$(printf '%*s' $width "")|  |${NC}"   
-    echo -ne "${SOFT_BLUE}|  |${WHITE}"
+    echo -e "${SOFT_BLUE}############################################################${NC}"
+    echo -e "${SOFT_BLUE} $(printf '%*s' $width "") ${NC}"   
+    echo -ne "${SOFT_BLUE} ${WHITE}"
     printf "%*s%s%*s" $pad_title "" "$title" $((width - pad_title - ${#title})) ""
-    echo -e "${SOFT_BLUE}|  |${NC}"    
-    echo -ne "${SOFT_BLUE}|  |${SOFT_BLUE}"
+    echo -e "${SOFT_BLUE} ${NC}"    
+    echo -ne "${SOFT_BLUE} ${SOFT_BLUE}"
     printf "%*s%s%*s" $pad_rel "" "$release" $((width - pad_rel - ${#release})) ""
-    echo -e "${SOFT_BLUE}|  |${NC}"    
-    echo -e "${SOFT_BLUE}|  |$(printf '%*s' $width "")|  |${NC}"
-    echo -e "${SOFT_BLUE}(——)════════════════════════════════════════════════════════════(——)${NC}"
+    echo -e "${SOFT_BLUE} ${NC}"    
+    echo -e "${SOFT_BLUE} $(printf '%*s' $width "") ${NC}"
+    echo -e "${SOFT_BLUE}############################################################${NC}"
     echo ""
 }
 
